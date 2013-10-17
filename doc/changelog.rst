@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Motor 0.1.2
+-----------
+
+Fixes innocuous unittest failures when running against Tornado 3.1.1.
+
 Motor 0.1.1
 -----------
 
