@@ -43,7 +43,7 @@ from pymongo.collection import Collection
 from pymongo.cursor import Cursor, _QUERY_OPTIONS
 from gridfs import grid_file
 
-import util
+from . import util
 
 __all__ = ['MotorClient', 'MotorReplicaSetClient', 'Op']
 
@@ -51,7 +51,7 @@ version_tuple = (0, 1, '+')
 
 
 def get_version_string():
-    if isinstance(version_tuple[-1], basestring):
+    if isinstance(version_tuple[-1], str):
         return '.'.join(map(str, version_tuple[:-1])) + version_tuple[-1]
     return '.'.join(map(str, version_tuple))
 
@@ -151,7 +151,7 @@ def motor_sock_method(method):
             return main.switch()
         except socket.error:  # TODO: delete
             raise
-        except IOError, e:
+        except IOError as e:
             # If IOStream raises generic IOError (e.g., if operation
             # attempted on closed IOStream), then substitute socket.error,
             # since socket.error is what PyMongo's built to handle. For
@@ -207,7 +207,7 @@ class MotorSocket(object):
         assert greenlet.getcurrent().parent, "Should be on child greenlet"
         try:
             self.stream.write(data)
-        except IOError, e:
+        except IOError as e:
             # PyMongo is built to handle socket.error here, not IOError
             raise socket.error(str(e))
 
@@ -372,7 +372,7 @@ class MotorPool(object):
                 # MotorSocket pauses this greenlet and resumes when connected.
                 motor_sock.connect(sa)
                 return motor_sock
-            except socket.error, e:
+            except socket.error as e:
                 self.motor_sock_counter -= 1
                 err = e
                 if sock is not None:
@@ -462,7 +462,7 @@ class MotorPool(object):
             try:
                 result = self.get_socket(pair)
                 loop.add_callback(functools.partial(future.set_result, result))
-            except Exception, e:
+            except Exception as e:
                 loop.add_callback(functools.partial(future.set_exception, e))
 
         # Start running the operation on a greenlet.
@@ -609,7 +609,7 @@ def asynchronize(motor_class, sync_method, has_write_concern, doc=None):
                     # Schedule future to be resolved on main greenlet.
                     loop.add_callback(functools.partial(
                         future.set_result, result))
-            except Exception, e:
+            except Exception as e:
                 if callback:
                     loop.add_callback(functools.partial(
                         callback, None, e))
@@ -951,7 +951,7 @@ class MotorOpenable(object):
                 args, kwargs = self._delegate_init_args()
                 self.delegate = self.__delegate_class__(*args, **kwargs)
                 callback(self, None)
-            except Exception, e:
+            except Exception as e:
                 callback(None, e)
 
         # Actually connect on a child greenlet
@@ -1087,7 +1087,7 @@ class MotorClientBase(MotorOpenable, MotorBase):
                 _callback(result, None)
             else:
                 raise gen.Return(result)
-        except Exception, e:
+        except Exception as e:
             if _callback:
                 _callback(None, e)
             else:
@@ -1247,7 +1247,7 @@ class MotorReplicaSetClient(MotorClientBase):
                 try:
                     monitor = self.delegate._MongoReplicaSetClient__monitor
                     monitor.start_motor(self.io_loop)
-                except Exception, e:
+                except Exception as e:
                     callback(None, e)
                 else:
                     callback(self, None)  # No errors
@@ -2178,7 +2178,7 @@ class MotorGridFS(MotorOpenable):
                 yield grid_file.write(data)
             finally:
                 yield grid_file.close()
-        except Exception, e:
+        except Exception as e:
             if _callback:
                 _callback(None, e)
             else:
